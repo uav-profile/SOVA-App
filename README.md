@@ -36,12 +36,10 @@
     python3 \\<путь_к_скрипту>\\SOVA.py
  
     
-# _________________________________________________
+
 # ![](https://github.com/uav-profile/SOVA-App/blob/main/sources/to_git/Ok.png) <a href="https://t.me/SovaAppBot"> TELEGRAM BOT</a>: <code>@SovaAppBot</code>    
     
 ![](https://github.com/uav-profile/SOVA-App/blob/main/sources/to_git/tg.png)      
-# _________________________________________________
-
 
 
 # Отказ от ответственности:

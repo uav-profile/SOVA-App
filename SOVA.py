@@ -4,16 +4,16 @@
 # License : MIT
 
 from modules.vk_module import *
-from modules.inst_module import *
 from modules.ip_module import *
 from modules.isdn_module import *
-from modules.osint_ui import *
+from modules.sova_ui import *
 from modules.about_ui import *
 from modules.share_ui import *
 from modules.start_ui import *
 from modules.license_ui import *
 from modules.rnd_ui import *
 from modules.ocid_module import *
+from modules.other_module import *
 import folium
 import datetime
 import pandas as pd
@@ -47,10 +47,9 @@ token_pstn = "token_pstn.txt"
 token_ocd = "token_ocd.txt"
 reserve_token_ocd = "token_ocd2.txt"
 login_p_vk = "log_pas_vk.txt"
-login_p_inst = "log_pas_inst.txt"
-# необходимо записать названия из папки /sources/text_data
+token_mailrep = "token_mailrep.txt"
+
 sites_data_nik = "sites.json"
-sites_data_for_info = "sites.txt"
 mcc_base_name = "mcc_codes.json"
 
 
@@ -204,7 +203,7 @@ class StartWindow(QtWidgets.QWidget):
 
         try:
             string_to_append = ""
-            with open(app_path + "\\sources\\text_data\\requirements.txt", "r", encoding="utf8") as file:
+            with open(app_path + "\\sources\\text_data\\tokens_names.txt", "r", encoding="utf8") as file:
                 string_to_append = file.read()
             list_strings = string_to_append.split("######")
             self.ui_start.textBrowser.append(list_strings[0])
@@ -212,20 +211,19 @@ class StartWindow(QtWidgets.QWidget):
                 "<p align=\"center\"> <img src=\"" + app_path + "\\sources\\images\\reg_vk.png\"></p>")
             self.ui_start.textBrowser.append(list_strings[1])
             self.ui_start.textBrowser.append(
-                "<p align=\"center\"> <img src=\"" + app_path + "\\sources\\images\\reg_inst.png\"></p>")
+                "<p align=\"center\"> <img src=\"" + app_path + "\\sources\\images\\reg_pstn.png\"></p>")
             self.ui_start.textBrowser.append(list_strings[2])
             self.ui_start.textBrowser.append(
-                "<p align=\"center\"> <img src=\"" + app_path + "\\sources\\images\\reg_pstn.png\"></p>")
+                "<p align=\"center\"> <img src=\"" + app_path + "\\sources\\images\\reg_oci.png\"></p>")
             self.ui_start.textBrowser.append(list_strings[3])
             self.ui_start.textBrowser.append(
-                "<p align=\"center\"> <img src=\"" + app_path + "\\sources\\images\\reg_oci.png\"></p>")
+                "<p align=\"center\"> <img src=\"" + app_path + "\\sources\\images\\reg_ip.png\"></p>")
             self.ui_start.textBrowser.append(list_strings[4])
             self.ui_start.textBrowser.append(
-                "<p align=\"center\"> <img src=\"" + app_path + "\\sources\\images\\reg_ip.png\"></p>")
+                "<p align=\"center\"> <img src=\"" + app_path + "\\sources\\images\\reg_emailrep.png\"></p>")
             # self.ui_start.textBrowser.append(list_strings[5])
             #
             # self.ui_start.textBrowser.append(list_strings[6])
-
             self.ui_start.textBrowser.moveCursor(QTextCursor.Start)
         except Exception as err:
             print(str(err))
@@ -283,7 +281,6 @@ class LicenseWindow(QtWidgets.QWidget):
 
 class MyWin(QtWidgets.QMainWindow):
 
-
     sites_data_json_nik = None
     access_token_vk = None
     session_vk = None
@@ -295,8 +292,6 @@ class MyWin(QtWidgets.QMainWindow):
     vk_flag_function = None
     base_mcc = None
     session_insta = None
-    inst_current_result = None
-    inst_current_model = None
 
     def __init__(self, parent=None):
         QtWidgets.QWidget.__init__(self, parent)
@@ -317,7 +312,6 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
         VK_GetAppPath(main_path=app_path, path_log_pass=(app_path + "\\tokens\\" + login_p_vk),
                       path_tok=app_path + "\\tokens\\" + token_vk)
-        INST_GetAppPath(main_path=app_path)
 
 
         if not os.path.exists(app_path + "\\temp"):
@@ -345,12 +339,8 @@ class MyWin(QtWidgets.QMainWindow):
         try:
             self.get_vk_token()
         except:
+            self.session_vk = None
             print("Токен ВК не получен")
-
-        try:
-            self.log_in_instagram()
-        except:
-            pass
 
         try:
             with open(str(app_path) + "\\sources\\text_data\\" + mcc_base_name, "r", encoding="utf8") as file_json:
@@ -364,18 +354,36 @@ class MyWin(QtWidgets.QMainWindow):
             print("База с сайтами не загружена!")
 
         # заметки для TBrowsers
+        self.ui.main_tbShowIMEI.append("<b>Внимание.</b>")
+        self.ui.main_tbShowIMEI.append("Введите IMEI (команда *#06#).")
+        self.ui.main_tbShowIMEI.append("Примеры: <i>35955601867867, 990002742342332</i>")
+        self.ui.main_tbShowWifi.append("<b>Внимание.</b>")
+        self.ui.main_tbShowWifi.append("Введите BSSID точки доступа.")
+        self.ui.main_tbShowWifi.append("Примеры: <i>00:0C:42:1F:65:E9, A0:F3:C1:3B:6F:90, A0F3C13B6F90, a0f3c13b6f90, A0-F3-C1-3B-6F-90</i>")
+        self.ui.main_tbShowEMAIL.append("<b>Внимание.</b>")
+        self.ui.main_tbShowEMAIL.append("Введите никнейм пользователя.")
+        self.ui.main_tbShowEMAIL.append("Примеры: <i>your_mail@domen.ru</i>")
+        self.ui.tbrwsr_ShowBStations.append("<b>Внимание.</b>")
+        self.ui.tbrwsr_ShowBStations.append("Результаты можно просмотреть в форме или html-файле (каталог reports). Также можно вывести на карту БС (для этого поставьте галочку)")
+        self.ui.tbrwsr_ShowBStations.append("<b>МАКСИМАЛЬНЫЙ РАДИУС = 4</b>")
+        self.ui.main_tbShowNikWidth.append("<b>Внимание.</b>")
+        self.ui.main_tbShowNikWidth.append("Введите никнейм пользователя.")
+        self.ui.main_tbShowNikWidth.append("Примеры: <i>your_nik34534</i>, <i>user12232</i>")
         self.ui.main_tb_ShowUserNameInfo.append("<b>Внимание.</b>")
         self.ui.main_tb_ShowUserNameInfo.append("Введите никнейм пользователя.")
         self.ui.main_tb_ShowUserNameInfo.append("Примеры: <i>your_nik13</i>, <i>username12</i>")
         self.ui.main_tb_ShowUserNameInfo.append("Совет: включите звуковые уведомления и сверните приложение.")
         self.ui.main_tbShowIPInfo.append("<b>Внимание.</b>")
-        self.ui.main_tbShowIPInfo.append("Чтобы получить информацию о текущем IP, необходимо оставить поле пустым.")
+        self.ui.main_tbShowIPInfo.append("Чтобы получить информацию о текущем IP, оставьте поле пустым.")
         self.ui.main_tbShowIPInfo.append("Примеры: <i>8.8.8.8</i>, <i>github.com</i>")
         self.ui.main_tbShowMSISDN.append("<b>Внимание.</b>")
         self.ui.main_tbShowMSISDN.append("Примеры: <i>+79876543210</i>, <i>89123456789,</i>")
         self.ui.main_tbShowMSISDN.append("<i>79876543210</i>, <i>+37423456789</i>")
         self.ui.main_tbShowIMSI.append("<b>Внимание.</b>")
-        self.ui.main_tbShowIMSI.append("Пример: <i>2500123456789101</i>")
+        self.ui.main_tbShowIMSI.append("Введите первые 3-5 цифр IMSI")
+        self.ui.main_tbShowIMSI.append("Первые 3 цифры - код страны")
+        self.ui.main_tbShowIMSI.append("4,5 цифра - код оператора")
+        self.ui.main_tbShowIMSI.append("Примеры: <i>250, 25001, 25099</i>")
         self.ui.vk_textBrowser.append("<b>Внимание.</b>")
         self.ui.vk_textBrowser.append(
             "API vk.com ограничивает количество пользователей, которых можно найти по имени: <b><code>1000</code></b>")
@@ -383,12 +391,9 @@ class MyWin(QtWidgets.QMainWindow):
             "В остальном - ограничений нет. В данном модуле использованы возможности REST API")
         self.ui.vk_textBrowser.append(
             "Пример поиска человека по имени: <i>Василий Петров</i>, <i>Петр Иванов</i>")
-        self.ui.inst_tt_textBrowser.append("<b>Внимание.</b>")
-        self.ui.inst_tt_textBrowser.append("Возможно получение информации, если известен ник пользователя.")
-        self.ui.inst_tt_textBrowser.append("Использованы возможности REST API")
         self.ui.main_tbShowGeoObjectLatLon.append("<b>Внимание.</b>")
         self.ui.main_tbShowGeoObjectLatLon.append("Введите название объекта.")
-        self.ui.main_tbShowGeoObjectLatLon.append("Например: <i>Сочи Театр, Орёл вокзал</i>")
+        self.ui.main_tbShowGeoObjectLatLon.append("Например: <i>Сочи Театр, Воронеж вокзал</i>")
         self.ui.main_tbShowGeoObjectInfo.append("<b>Внимание.</b>")
         self.ui.main_tbShowGeoObjectInfo.append("Введите широту и долготу объекта или места, появится описание.")
         self.ui.main_tbShowGeoObjectInfo.append("Например: <i>39.0437567,-77.4874416</i>")
@@ -419,6 +424,16 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.main_pb_clearGeoInfo.clicked.connect(self.on_clicked_pb_clearGeoInfo)
         self.ui.main_pb_ShowBStations.clicked.connect(self.on_clicked_pb_ShowBStations)
         self.ui.main_pb_clearShowBStations.clicked.connect(self.on_clicked_main_pb_clearShowBStations)
+        self.ui.main_pb_ShowNikWidth.clicked.connect(self.on_clicked_main_pb_ShowNikWidth)
+        self.ui.main_pb_clearNikWidth.clicked.connect(self.on_clicked_main_pb_clearNikWidth)
+        self.ui.main_pb_ShowEMAIL.clicked.connect(self.on_clicked_main_pb_ShowEMAIL)
+        self.ui.main_pb_clearEMAIL.clicked.connect(self.on_clicked_main_pb_clearEMAIL)
+        self.ui.main_pb_ShowBTSGeo.clicked.connect(self.on_clicked_main_pb_ShowBTSGeo)
+        self.ui.main_pb_clearShowBTSGeo.clicked.connect(self.on_clicked_main_pb_clearShowBTSGeo)
+        self.ui.main_pb_ShowWifi.clicked.connect(self.on_clicked_main_pb_ShowWifi)
+        self.ui.main_pb_clearWifi.clicked.connect(self.on_clicked_main_pb_clearWifi)
+        self.ui.main_pb_ShowIMEI.clicked.connect(self.on_clicked_main_pb_ShowIMEI)
+        self.ui.main_pb_clearIMEI.clicked.connect(self.on_clicked_main_pb_clearIMEI)
         # VK.COM:
         self.ui.vk_pbSearchByName.clicked.connect(self.on_clicked_vk_pbSearchByName)
         self.ui.vk_pbCheckIsMember.clicked.connect(self.on_clicked_vk_pbCheckIsMember)
@@ -431,14 +446,6 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.vk_pbDownTable.clicked.connect(self.on_clicked_vk_pbDownTable)
         self.ui.vk_pbShowDiagrams.clicked.connect(self.on_clicked_vk_pbShowDiagrams)
         self.ui.vk_pbGetID.clicked.connect(self.on_clicked_vk_pbGetID)
-
-        # insta
-        self.ui.inst_pbGetID.clicked.connect(self.on_clicked_inst_pbGetID)
-        self.ui.inst_pbSearchByID.clicked.connect(self.on_clicked_inst_pbSearchByID)
-        self.ui.comboBox_inst_set_choice.currentIndexChanged.connect(self.inst_choice_changed)
-        self.ui.inst_pbDownloadPhotos.clicked.connect(self.on_clicked_inst_pb_downloadPhotos)
-        self.ui.inst_tt_pbClearForm.clicked.connect(self.on_clicked_inst_pbClearForm)
-        self.ui.inst_tt_pbSaveResult.clicked.connect(self.on_clicked_inst_saveResult)
         # установка курсоров на кнопки
         # общие кнопки
         self.ui.vk_pbShowPict.setCursor(QtCore.Qt.PointingHandCursor)
@@ -459,6 +466,18 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.main_pb_clearGeoInfo.setCursor(QtCore.Qt.PointingHandCursor)
         self.ui.main_pb_ShowBStations.setCursor(QtCore.Qt.PointingHandCursor)
         self.ui.main_pb_clearShowBStations.setCursor(QtCore.Qt.PointingHandCursor)
+        self.ui.main_pb_ShowNikWidth.setCursor(QtCore.Qt.PointingHandCursor)
+        self.ui.main_pb_clearNikWidth.setCursor(QtCore.Qt.PointingHandCursor)
+        self.ui.main_pb_ShowEMAIL.setCursor(QtCore.Qt.PointingHandCursor)
+        self.ui.main_pb_clearEMAIL.setCursor(QtCore.Qt.PointingHandCursor)
+        self.ui.main_pb_ShowIMEI.setCursor(QtCore.Qt.PointingHandCursor)
+        self.ui.main_pb_clearIMEI.setCursor(QtCore.Qt.PointingHandCursor)
+        self.ui.main_pb_ShowWifi.setCursor(QtCore.Qt.PointingHandCursor)
+        self.ui.main_pb_clearWifi.setCursor(QtCore.Qt.PointingHandCursor)
+        self.ui.main_pb_ShowBTSGeo.setCursor(QtCore.Qt.PointingHandCursor)
+        self.ui.main_pb_clearShowBTSGeo.setCursor(QtCore.Qt.PointingHandCursor)
+        # self.ui.main_pb_clearShowBStations.setCursor(QtCore.Qt.PointingHandCursor)
+
         # VK.COM
         self.ui.vk_pbSearchByName.setCursor(QtCore.Qt.PointingHandCursor)
         self.ui.vk_pbCheckIsMember.setCursor(QtCore.Qt.PointingHandCursor)
@@ -470,12 +489,7 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.vk_pbDownTable.setCursor(QtCore.Qt.PointingHandCursor)
         self.ui.vk_pbShowDiagrams.setCursor(QtCore.Qt.PointingHandCursor)
         self.ui.vk_pbGetID.setCursor(QtCore.Qt.PointingHandCursor)
-        # instagram
-        self.ui.inst_pbSearchByID.setCursor(QtCore.Qt.PointingHandCursor)
-        self.ui.inst_tt_pbSaveResult.setCursor(QtCore.Qt.PointingHandCursor)
-        self.ui.inst_tt_pbClearForm.setCursor(QtCore.Qt.PointingHandCursor)
-        self.ui.inst_pbGetID.setCursor(QtCore.Qt.PointingHandCursor)
-        self.ui.inst_pbDownloadPhotos.setCursor(QtCore.Qt.PointingHandCursor)
+
         # загружаем иконки
         ico_get_id = QtGui.QIcon(app_path + "\\sources\\images\\world_key.png")
         ico_url_pic = QtGui.QIcon(app_path + "\\sources\\images\\ico_open_url.png")
@@ -483,11 +497,11 @@ class MyWin(QtWidgets.QMainWindow):
         ico_search = QtGui.QIcon(app_path + "\\sources\\images\\ico_search.png")
         ico_search_id = QtGui.QIcon(app_path + "\\sources\\images\\ico_search_id.png")
         ico_save = QtGui.QIcon(app_path + "\\sources\\images\\ico_properties.png")
-        ico_browser = QtGui.QIcon(app_path + "\\sources\\images\\ico_browser.png")
+        # ico_browser = QtGui.QIcon(app_path + "\\sources\\images\\ico_browser.png")
         ico_up_table = QtGui.QIcon(app_path + "\\sources\\images\\ico_collapse.png")
         ico_down_table = QtGui.QIcon(app_path + "\\sources\\images\\ico_expand.png")
         ico_pie_diagram = QtGui.QIcon(app_path + "\\sources\\images\\ico_pie.png")
-        ico_connections = QtGui.QIcon(app_path + "\\sources\\images\\mind_map.png")
+        # ico_connections = QtGui.QIcon(app_path + "\\sources\\images\\mind_map.png")
         ico_colour = QtGui.QIcon(app_path + "\\sources\\images\\services.png")
         ico_button_play_green = QtGui.QIcon(app_path + "\\sources\\images\\button_play_green.png")
         ico_button_play_pink = QtGui.QIcon(app_path + "\\sources\\images\\button_play_pink.png")
@@ -495,23 +509,21 @@ class MyWin(QtWidgets.QMainWindow):
         ico_button_play_blue = QtGui.QIcon(app_path + "\\sources\\images\\button_play_blue.png")
         ico_green_open_base = QtGui.QIcon(app_path + "\\sources\\images\\database_start.png")
         ico_sound = QtGui.QIcon(app_path + "\\sources\\images\\ico_sound.png")
-        ico_martian = QtGui.QIcon(app_path + "\\sources\\images\\Bad-Pig.png")
+        # ico_martian = QtGui.QIcon(app_path + "\\sources\\images\\Bad-Pig.png")
         ico_download = QtGui.QIcon(app_path + "\\sources\\images\\download.png")
         # иконки на ТАБ-виджет
 
         icon1 = QtGui.QIcon()
         icon1.addPixmap(QtGui.QPixmap(app_path + "\\sources\\images\\vk_logo.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.ui.tabMain.addTab(self.ui.tabVK, icon1, "vk.com")
-        icon3 = QtGui.QIcon()
-        icon3.addPixmap(QtGui.QPixmap(app_path + "\\sources\\images\\inst_logo.png"), QtGui.QIcon.Normal,
-                        QtGui.QIcon.Off)
-        self.ui.tabMain.addTab(self.ui.tabInstagram, icon3, "instagram.com")
 
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(app_path + "\\sources\\images\\api_call.png"), QtGui.QIcon.Normal,
                        QtGui.QIcon.Off)
-        self.ui.tabMain.addTab(self.ui.tabCommon, icon, "REST API + Snoop")
-
+        self.ui.tabMain.addTab(self.ui.tabCommon, icon, "API + OSINT")
+        icon3 = QtGui.QIcon()
+        icon3.addPixmap(QtGui.QPixmap(app_path + "\\sources\\images\\ant.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.ui.tabMain.addTab(self.ui.tabGSM, icon3, "GSM/WIFI")
         # icon5 = QtGui.QIcon()
         # icon5.addPixmap(QtGui.QPixmap(app_path + "\\sources\\images\\twitter_logo.png"), QtGui.QIcon.Normal,
         #                QtGui.QIcon.Off)
@@ -536,6 +548,18 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.main_pb_ShowGeoInfo.setIcon(ico_button_play_red)
         self.ui.main_pb_ShowBStations.setIcon(ico_button_play_red)
         self.ui.main_pb_clearShowBStations.setIcon(ico_clear)
+        self.ui.main_pb_ShowNikWidth.setIcon(ico_button_play_green)
+        self.ui.main_pb_ShowEMAIL.setIcon(ico_button_play_green)
+        self.ui.main_pb_clearNikWidth.setIcon(ico_clear)
+        self.ui.main_pb_clearEMAIL.setIcon(ico_clear)
+        self.ui.main_pb_clearWifi.setIcon(ico_clear)
+        self.ui.main_pb_clearIMEI.setIcon(ico_clear)
+        self.ui.main_pb_ShowIMEI.setIcon(ico_button_play_blue)
+        self.ui.main_pb_ShowWifi.setIcon(ico_button_play_blue)
+        self.ui.main_pb_ShowBTSGeo.setIcon(ico_button_play_red)
+        self.ui.main_pb_clearShowBTSGeo.setIcon(ico_clear)
+
+
         # VK.COM
         self.ui.vk_pbClearForm.setIcon(ico_clear)
         self.ui.vk_pbSearchByName.setIcon(ico_search)
@@ -548,12 +572,6 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.vk_pbShowDiagrams.setIcon(ico_pie_diagram)
         self.ui.vk_pbGetID.setIcon(ico_get_id)
 
-        # INSTA:
-        self.ui.inst_pbSearchByID.setIcon(ico_search)
-        self.ui.inst_tt_pbClearForm.setIcon(ico_clear)
-        self.ui.inst_tt_pbSaveResult.setIcon(ico_save)
-        self.ui.inst_pbGetID.setIcon(ico_get_id)
-        self.ui.inst_pbDownloadPhotos.setIcon(ico_download)
         # дополнительно
         self.ui.tabMain.setTabBarAutoHide(True)
         self.ui.tabMain.setMovable(True)
@@ -664,13 +682,16 @@ class MyWin(QtWidgets.QMainWindow):
 
     def get_vk_token(self):
         try:
-            self.access_token_vk = open(app_path + "\\tokens\\" + token_vk, "r").read()
+            try:
+                self.access_token_vk = open(app_path + "\\tokens\\" + token_vk, "r").read()
+            except:
+                self.access_token_vk = ReturnToken()
+            self.session_vk = API(self.access_token_vk, version="5.103")
         except:
-            self.access_token_vk = ReturnToken()
-        self.session_vk = API(self.access_token_vk, version="5.103")
+            self.access_token_vk = None
 
     def on_clicked_vk_pbDownTable(self):
-        if self.vk_flag_function != None:
+        if self.vk_flag_function:
             if self.vk_flag_function == "users":
                 try:
                     self.vk_clear_form()
@@ -707,10 +728,10 @@ class MyWin(QtWidgets.QMainWindow):
                             criteria += ", online"
                         criteria += "\""
                         result, self.vk_count, self.vk_current_model = VK_Search(self.session_vk,
-                                                                                 name=self.vk_searching_name,
-                                                                                 sort_rule=sort_r,
-                                                                                 online_stat=online_st, age=age_list,
-                                                                                 offset=str(self.vk_offset))
+                                                                                name=self.vk_searching_name,
+                                                                                sort_rule=sort_r,
+                                                                                online_stat=online_st, age=age_list,
+                                                                                offset=str(self.vk_offset))
                         if result == "good":
                             self.ui.vk_pbUpTable.setEnabled(True)
                             self.ui.vk_table.setGeometry(1, 1, 571, 535)
@@ -806,9 +827,9 @@ class MyWin(QtWidgets.QMainWindow):
                         criteria += searched_name
                         criteria += "\""
                         result, self.vk_count, self.vk_current_model = VK_SearchGroups(self.session_vk,
-                                                                                       text=searched_name,
-                                                                                       sort_rule=sort_r, count=200,
-                                                                                       offset=self.vk_offset)
+                                                                                    text=searched_name,
+                                                                                    sort_rule=sort_r, count=200,
+                                                                                    offset=self.vk_offset)
                         if result == "good":
                             self.ui.vk_pbUpTable.setEnabled(True)
                             self.ui.vk_table.setGeometry(1, 1, 571, 535)
@@ -878,7 +899,7 @@ class MyWin(QtWidgets.QMainWindow):
                     msg.exec_()
 
     def on_clicked_vk_pbUpTable(self):
-        if self.vk_flag_function != None:
+        if self.vk_flag_function:
             if self.vk_flag_function == "users":
                 try:
                     self.vk_clear_form()
@@ -913,11 +934,11 @@ class MyWin(QtWidgets.QMainWindow):
                             criteria += ", online"
                         criteria += "\""
                         result, self.vk_count, self.vk_current_model = VK_Search(self.session_vk,
-                                                                                 name=self.vk_searching_name,
-                                                                                 sort_rule=sort_r,
-                                                                                 online_stat=online_st,
-                                                                                 age=age_list,
-                                                                                 offset=str(self.vk_offset))
+                                                                                name=self.vk_searching_name,
+                                                                                sort_rule=sort_r,
+                                                                                online_stat=online_st,
+                                                                                age=age_list,
+                                                                                offset=str(self.vk_offset))
                         if result == "good":
                             self.ui.vk_pbDownTable.setEnabled(True)
                             self.ui.vk_table.setGeometry(1, 1, 571, 535)
@@ -1003,9 +1024,9 @@ class MyWin(QtWidgets.QMainWindow):
                         criteria += searched_name
                         criteria += "\""
                         result, self.vk_count, self.vk_current_model = VK_SearchGroups(self.session_vk,
-                                                                                       text=searched_name,
-                                                                                       sort_rule=sort_r, count=200,
-                                                                                       offset=self.vk_offset)
+                                                                                    text=searched_name,
+                                                                                    sort_rule=sort_r, count=200,
+                                                                                    offset=self.vk_offset)
                         if result == "good":
                             self.ui.vk_pbDownTable.setEnabled(True)
                             self.ui.vk_table.setGeometry(1, 1, 571, 535)
@@ -1101,8 +1122,8 @@ class MyWin(QtWidgets.QMainWindow):
                 criteria += "\""
                 self.vk_clear_form()
                 result, self.vk_count, self.vk_current_model = VK_Search(self.session_vk, name=self.vk_searching_name,
-                                                                         sort_rule=sort_r, online_stat=online_st,
-                                                                         age=age_list, offset=str(self.vk_offset))
+                                                                        sort_rule=sort_r, online_stat=online_st,
+                                                                        age=age_list, offset=str(self.vk_offset))
                 if result == "good":
                     self.ui.vk_table.setGeometry(1, 1, 571, 535)
                     self.ui.vk_table.setMinimumHeight(535)
@@ -1613,7 +1634,6 @@ class MyWin(QtWidgets.QMainWindow):
             dic[friend] = {i for i in friend_friends_list if i in ids}
         return dic, ids
 
-
     def on_clicked_vk_pbGetID(self):
         searching_url = self.ui.vk_textEdiGetID.text()
         try:
@@ -1658,7 +1678,7 @@ class MyWin(QtWidgets.QMainWindow):
             msg.exec_()
 
 
-    #      SNOOP Project
+    #      SNOOP Project + NICKNAMES_WIDTH
 
     def get_sites_json(self):
         try:
@@ -1666,13 +1686,8 @@ class MyWin(QtWidgets.QMainWindow):
                 self.sites_data_json_nik = json.load(file_json)
                 count_sites = len(self.sites_data_json_nik)
                 self.ui.main_progressBarUserName.setMaximum(count_sites)
-                self.ui.main_label_showBase_2.setText("База: " + (str(sites_data_nik)))
-                self.ui.main_label_showBase.setText("Сайтов: " + (str(count_sites)))
-        except Exception as err:
-            self.ui.main_label_showBase_2.setText("Ошибка")
-            self.ui.main_label_showBase.setText("База не загружена")
+        except:
             self.ui.main_showBaseSites.setEnabled(False)
-            print(err)
 
     def snoop_engine(self, username=None, site_data=None):
         # Создать сеанс на основе методологии запроса.
@@ -1874,12 +1889,51 @@ class MyWin(QtWidgets.QMainWindow):
     def on_clicked_showBaseSites(self):
         self.ui.main_progressBarUserName.setValue(0)
         self.ui.main_tb_ShowUserNameInfo.clear()
-        with open(str(app_path) + "\\sources\\text_data\\" + sites_data_for_info, "r", encoding="utf8") as file:
-            for site in file.readlines():
-                list_split = site.split(" ")
-                str_to_append = list_split[0] + " " + list_split[2]
-                self.ui.main_tb_ShowUserNameInfo.append(str_to_append)
+        with open(str(app_path) + "\\sources\\text_data\\" + sites_data_nik, "r", encoding="utf8") as file:
+            sites_data_json_nik = json.load(file)
+            for idx, site in enumerate(sites_data_json_nik):
+                self.ui.main_tb_ShowUserNameInfo.append(str(idx+1) + ". " + str(site))
         self.ui.main_tb_ShowUserNameInfo.moveCursor(QTextCursor.Start)
+
+    def on_clicked_main_pb_ShowNikWidth(self):
+        username_from_form = self.ui.main_editNikWidth.text()
+        if username_from_form != "":
+            try:
+                self.ui.main_tbShowNikWidth.clear()
+                try:
+                    self.get_vk_token()
+                except:
+                    pass
+                str_to_ret = Search_NickName(username_from_form, self.session_vk)
+                self.ui.main_tbShowNikWidth.moveCursor(QTextCursor.Start)
+                if str_to_ret != "NULL":
+                    self.ui.main_tbShowNikWidth.append(str_to_ret)
+                    if self.ui.main_checkBox_sound.isChecked():
+                        playsound(str(app_path) + "\\sources\\sounds\\end.wav")
+                else:
+                    msg = QMessageBox()
+                    msg.setIcon(QMessageBox.Warning)
+                    msg.setText("Ничего не найдено!")
+                    msg.setWindowTitle("Уведомление")
+                    msg.exec_()
+            except Exception as e:
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Warning)
+                msg.setText("Ошибка: " + str(e))
+                msg.setWindowTitle("Уведомление")
+                msg.exec_()
+        else:
+            if self.ui.main_checkBox_sound.isChecked():
+                playsound(str(app_path) + "\\sources\\sounds\\err.wav")
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setText("Введите никнейм")
+            msg.setWindowTitle("Нет данных")
+            msg.exec_()
+    
+    def on_clicked_main_pb_clearNikWidth(self):
+        self.ui.main_editNikWidth.clear()
+        self.ui.main_tbShowNikWidth.clear()
 
     #    REST API   // ГЛАВНОЕ ОКНО
 
@@ -1964,6 +2018,7 @@ class MyWin(QtWidgets.QMainWindow):
         isdn_from_form = self.ui.main_editISDN.text()
         fst_good = False
         snd_good = False
+        
         if isdn_from_form != "":
             self.ui.main_tbShowMSISDN.clear()
             try:
@@ -2027,8 +2082,8 @@ class MyWin(QtWidgets.QMainWindow):
                 playsound(str(app_path) + "\\sources\\sounds\\err.wav")
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Warning)
-            msg.setText("Поле ввода пустое")
-            msg.setWindowTitle("Уведомление")
+            msg.setText("Поле ввода пусто")
+            msg.setWindowTitle("Ошибка")
             msg.exec_()
 
     def on_clicked_pb_clearSearchISDN(self):
@@ -2043,468 +2098,136 @@ class MyWin(QtWidgets.QMainWindow):
         imsi_from_form = self.ui.main_editIMSI.text()
         if imsi_from_form != "":
             self.ui.main_tbShowIMSI.clear()
-            mcc = imsi_from_form[0:3]
-            mnc = imsi_from_form[3:5]
             try:
-                brand, operator, country, kod = self.base_mcc[mcc][mnc]
-                self.ui.main_tbShowIMSI.append("Оператор (бренд): <i>" + brand + "</i>")
-                self.ui.main_tbShowIMSI.append("Компания: <i>" + operator + "</i>")
-                self.ui.main_tbShowIMSI.append("Страна: <i>" + country + " (" + kod + ")" + "</i>")
-            except:
-                self.ui.main_tbShowIMSI.append("<p align=\"center\"><b><code>НЕ НАЙДЕНО</code></p></b>")
-
-
-    #           INSTAGRAM
-
-    def INST_LoadLoginPassword(self, path):
-        login_i = None
-        password_i = None
-        try:
-            with open(str(path), "r") as f:
-                currStr = f.read()
-                list = currStr.split(" ")
-                login_i = list[0]
-                password_i = list[1]
-        except:
-            print("Токен ИНСТАГРАМ не получен")
-        return login_i, password_i
-
-    def log_in_instagram(self):
-        try:
-            l_insta, p_insta = self.INST_LoadLoginPassword(path=(app_path + "\\tokens\\" + login_p_inst))
-            self.session_insta = Osintgram(l_insta, p_insta)
-        except Exception as e:
-            print(e)
-            print("Сессия ИНСТАГРАМ не создана")
-
-    def on_clicked_inst_pbGetID(self):
-        curr_nick = self.ui.inst_textEdiGetID.text()
-        if curr_nick != "":
-            id = self.session_insta.getUserID(username=curr_nick)
-            if id != "null":
-                string_to_msgBox = ("Запрос выполнен!")
-                self.ui.inst_textEdiGetID.setText(str(id))
+                info = get_imsi_info_new_func(app_path, imsi_from_form)
                 if self.ui.main_checkBox_sound.isChecked():
                     playsound(str(app_path) + "\\sources\\sounds\\end.wav")
-                msg = QMessageBox()
-                msg.setIcon(QMessageBox.Information)
-                msg.setText(string_to_msgBox)
-                msg.setWindowTitle("Успех")
-                msg.exec_()
-            else:
+                self.ui.main_tbShowIMSI.append(info)
+            except:
                 if self.ui.main_checkBox_sound.isChecked():
-                    playsound(str(app_path) + "\\sources\\sounds\\err.wav")
-                msg = QMessageBox()
-                msg.setIcon(QMessageBox.Warning)
-                msg.setText("Instagram не знает такого пользователя")
-                msg.setWindowTitle("Ошибка")
-                msg.exec_()
-
-    def on_clicked_inst_pbSearchByID(self):
-        self.inst_current_model = None
-        self.inst_current_result = None
-        check_show_Content = self.ui.inst_checkBox_showContent.isChecked()
-        check_show_Adr = self.ui.inst_checkBox_showAddresses.isChecked()
-        check_show_likes = self.ui.inst_checkBox_showLikes.isChecked()
-        check_show_comments = self.ui.inst_checkBox_showComments.isChecked()
-        check_show_peoples_on_photo = self.ui.inst_checkBox_showPeoplesOnPhoto.isChecked()
-        searching_user = self.ui.inst_textEditSearchByID.text()
-        if searching_user != "":
-            choice_mode = self.ui.comboBox_inst_set_choice.currentIndex()
-            if choice_mode == 0:
-                self.inst_clear_form()
-                self.ui.inst_tt_textBrowser.setGeometry(1, 1, 741, 540)
-                self.ui.inst_tt_textBrowser.setMinimumHeight(540)
-                self.ui.inst_tt_textBrowser.setMaximumHeight(540)
-                self.ui.inst_tt_table.setGeometry(1, 550, 741, 5)
-                self.ui.inst_tt_table.setMaximumHeight(5)
-                self.ui.inst_tt_table.setMinimumHeight(5)
-                string_from_INST_Search = ""
-                string_to_report = ""
-                result = ""
-                try:
-                    current_user_id = self.session_insta.getUserID(username=searching_user)
-                    if current_user_id != "null":
-                        result, string_from_INST_Search, string_to_report = self.session_insta.getUserInfo(
-                            username=searching_user)
-                        if result == "good":
-                            self.ui.inst_tt_textBrowser.setMinimumHeight(530)
-                            self.ui.inst_tt_table.setMaximumHeight(10)
-                            self.ui.inst_tt_textBrowser.append(string_from_INST_Search)
-
-                            self.inst_current_result = "<title>Отчет. Пользователь</title>"
-                            self.inst_current_result += "<big><b>Источник: instagram.com</b></big>"
-                            self.inst_current_result += string_to_report
-                            if self.ui.main_checkBox_sound.isChecked():
-                                playsound(str(app_path) + "\\sources\\sounds\\end.wav")
-
-                        if check_show_Content == True:
-                            counter = 0
-                            carousel_cnt = 0
-                            photo_cnt = 0
-                            video_cnt = 0
-                            try:
-                                counter, photo_cnt, video_cnt, carousel_cnt = self.session_insta.getMediaType(
-                                    id=current_user_id)
-                            except:
-                                pass
-                            if counter != 0:
-                                self.ui.inst_tt_textBrowser.append(" ")
-                                self.ui.inst_tt_textBrowser.append("<b>Контент (всего): </b>" + str(counter))
-                                self.ui.inst_tt_textBrowser.append("<b>Фотографии: </b>" + str(photo_cnt))
-                                self.ui.inst_tt_textBrowser.append("<b>Видеозаписи: </b>" + str(video_cnt))
-                                self.ui.inst_tt_textBrowser.append("<b>Карусель (альбом): </b>" + str(carousel_cnt))
-                                string_to_report = "<br><br><b>Контент (всего)</b>: <code>" + str(counter) + "</code>"
-                                string_to_report += "<br>Фотографии: <code>" + str(photo_cnt) + "</code>"
-                                string_to_report += "<br>Видеозаписи: <code>" + str(video_cnt) + "</code>"
-                                string_to_report += "<br>Карусель (альбом): <code>" + str(carousel_cnt) + "</code>"
-                                string_to_report += "<br>"
-                                self.inst_current_result += string_to_report
-
-                        if check_show_Adr == True:
-                            try:
-                                address = self.session_insta.getAddrs(id=current_user_id)
-                                len_list = len(address)
-                                if len_list != 0:
-                                    self.ui.inst_tt_textBrowser.append(" ")
-                                    self.ui.inst_tt_textBrowser.append("<b>Адреса фото: </b>")
-                                    self.inst_current_result += "<br><b>Адреса</b>, отмеченные на фото:"
-                                    for i in range(0, len_list):
-                                        str_to_text_browser = ("<i><b>" + str(i + 1) + ".</b>")
-                                        self.inst_current_result += "<br><i><b>" + str(i + 1) + ".</b>"
-                                        for item in address[i]:
-                                            str_to_text_browser += (" " + item + "</i>")
-                                            self.inst_current_result += " " + item + "</i>"
-                                        self.ui.inst_tt_textBrowser.append(str_to_text_browser)
-                            except Exception as e:
-                                print(e)
-
-                        if check_show_likes == True:
-                            try:
-                                str_to_tb = self.session_insta.getTotalLikes(id=current_user_id)
-                                self.ui.inst_tt_textBrowser.append("")
-                                self.ui.inst_tt_textBrowser.append("<b>" + str_to_tb + "</b>")
-                                self.inst_current_result += "<br><br>"
-                                self.inst_current_result += "<b>" + str_to_tb + "</b>"
-                            except:
-                                pass
-
-                        if check_show_comments == True:
-                            try:
-                                str_to_tb = self.session_insta.getTotalComments(id=current_user_id)
-                                self.ui.inst_tt_textBrowser.append("")
-                                self.ui.inst_tt_textBrowser.append("<b>" + str_to_tb + "</b>")
-                                self.inst_current_result += "<br><br>"
-                                self.inst_current_result += "<b>" + str_to_tb + "</b>"
-                            except:
-                                pass
-
-                        if check_show_peoples_on_photo == True:
-                            try:
-                                a1, a2, a3, a4 = self.session_insta.getPeopleTaggedByUser(id=current_user_id)
-                                count_items = len(a2)
-                                if a2 != 0 and a1 != 0 and a3 != 0 and a4 != 0:
-                                    self.ui.inst_tt_textBrowser.append("")
-                                    self.ui.inst_tt_textBrowser.append("<b>На фото пользователя присутствуют:</b>")
-                                    self.inst_current_result += "<br><br><b>На фото пользователя присутствуют:</b>"
-                                    try:
-                                        for i in range(0, count_items):
-                                            string_to_tb = "<b>" + str(i + 1) + ".</b>"
-                                            self.inst_current_result += "<br><b>" + str(i + 1) + ".</b>"
-                                            self.inst_current_result += (" " + str(a2[i]) + " (<code>" + str(
-                                                a3[i]) + "</code>, id: <code>" + str(
-                                                a4[i]) + "</code>), количество упоминаний: " + str(a1[i]))
-                                            string_to_tb += (" " + str(a2[i]) + " (<code>" + str(
-                                                a3[i]) + "</code>, id: <code>" + str(
-                                                a4[i]) + "</code>), количество упоминаний: " + str(a1[i]))
-                                            self.ui.inst_tt_textBrowser.append(string_to_tb)
-                                    except Exception as e:
-                                        print(e)
-                            except:
-                                pass
-
-                        self.ui.inst_tt_textBrowser.moveCursor(QTextCursor.Start)
-                    else:
-                        msg = QMessageBox()
-                        msg.setIcon(QMessageBox.Warning)
-                        msg.setText("Такого пользователя не существует")
-                        msg.setWindowTitle("Ошибка")
-                        msg.exec_()
-                        self.ui.inst_tt_textBrowser.append(string_from_INST_Search)
-                        if self.ui.main_checkBox_sound.isChecked():
-                            playsound(str(app_path) + "\\sources\\sounds\\err.wav")
-                except Exception as error:
-                    if self.ui.main_checkBox_sound.isChecked():
-                        playsound(str(app_path) + "\\sources\\sounds\\err.wav")
-                    msg = QMessageBox()
-                    msg.setIcon(QMessageBox.Warning)
-                    msg.setText(str(error))
-                    msg.setWindowTitle("Внутренняя ошибка")
-                    msg.exec_()
-            elif choice_mode == 1:
-                self.inst_clear_form()
-                try:
-                    current_user_id = self.session_insta.getUserID(username=searching_user)
-                    if current_user_id != "null":
-                        self.inst_current_model, count = self.session_insta.getFollowings(id=current_user_id)
-                        if count != 0 and count != "no users":
-                            self.inst_clear_form()
-                            self.ui.inst_tt_table.setGeometry(1, 1, 571, 535)
-                            self.ui.inst_tt_table.setMinimumHeight(535)
-                            self.ui.inst_tt_table.setMaximumHeight(535)
-                            self.ui.inst_tt_textBrowser.setGeometry(1, 540, 571, 29)
-                            self.ui.inst_tt_textBrowser.setMaximumHeight(29)
-                            self.ui.inst_tt_textBrowser.setMinimumHeight(29)
-                            self.ui.inst_tt_textBrowser.append(
-                                "<p align=\"center\"><b>Всего найдено: " + str(count) + "</b></p>")
-                            self.ui.inst_tt_table.setModel(self.inst_current_model)
-                            self.ui.inst_tt_table.resizeColumnsToContents()
-                            self.ui.inst_tt_table.resizeRowsToContents()
-                            self.inst_current_result = "<title>Отчет. Подписки</title>"
-                            self.inst_current_result += "<big><b>Источник: instagram.com</b></big>"
-                            self.inst_current_result += "<br><big><b>Поиск подписок</b></big>"
-                            self.inst_current_result += "<br>Выборка от<big><code> "
-                            currDt = datetime.datetime.now()
-                            string_time = currDt.strftime('%H:%M:%S %Y.%m.%d г.')
-                            self.inst_current_result += string_time
-                            self.inst_current_result += ("</i><br>Всего найдено: <i>" + str(count))
-                            self.inst_current_result += "</i><br> Заголовок: <i>id, username, закрытый, верифицирован, полное имя</i>"
-                            self.inst_current_result += "<br>"
-                            if self.ui.main_checkBox_sound.isChecked():
-                                playsound(str(app_path) + "\\sources\\sounds\\end.wav")
-                            msg = QMessageBox()
-                            msg.setIcon(QMessageBox.Information)
-                            msg.setText("Найдено: " + str(count))
-                            msg.setWindowTitle("Подписки")
-                            msg.exec_()
-                        else:
-                            self.ui.inst_tt_textBrowser.append(
-                                "<p align=\"center\"><b><h2>Подписчики не найдены или закрыты пользователем</h2></b></p>")
-                            msg = QMessageBox()
-                            msg.setIcon(QMessageBox.Information)
-                            msg.setText("Подписчики не найдены или закрыты пользователем")
-                            msg.setWindowTitle("Уведомление")
-                            msg.exec_()
-                    else:
-                        self.inst_clear_form()
-                        self.ui.inst_tt_textBrowser.append(
-                            "<p align=\"center\"><b>Пользователь не найден</b></p>")
-                        msg = QMessageBox()
-                        msg.setIcon(QMessageBox.Information)
-                        msg.setText("Пользователь не найден")
-                        msg.setWindowTitle("Уведомление")
-                        msg.exec_()
-                except Exception as err:
-                    if self.ui.main_checkBox_sound.isChecked():
-                        playsound(str(app_path) + "\\sources\\sounds\\err.wav")
-                    msg = QMessageBox()
-                    msg.setIcon(QMessageBox.Warning)
-                    msg.setText(str(err))
-                    msg.setWindowTitle("Внутренняя ошибка")
-                    msg.exec_()
-            elif choice_mode == 2:
-                self.inst_clear_form()
-                try:
-                    current_user_id = self.session_insta.getUserID(username=searching_user)
-                    if current_user_id != "null":
-                        self.inst_current_model, count = self.session_insta.getFollowers(id=current_user_id)
-                        if count != 0 and count != "no users":
-                            self.inst_clear_form()
-                            self.ui.inst_tt_table.setGeometry(1, 1, 571, 535)
-                            self.ui.inst_tt_table.setMinimumHeight(535)
-                            self.ui.inst_tt_table.setMaximumHeight(535)
-                            self.ui.inst_tt_textBrowser.setGeometry(1, 540, 571, 29)
-                            self.ui.inst_tt_textBrowser.setMaximumHeight(29)
-                            self.ui.inst_tt_textBrowser.setMinimumHeight(29)
-                            self.ui.inst_tt_textBrowser.append(
-                                "<p align=\"center\"><b>Всего найдено: " + str(count) + "</b></p>")
-                            self.ui.inst_tt_table.setModel(self.inst_current_model)
-                            self.ui.inst_tt_table.resizeColumnsToContents()
-                            self.ui.inst_tt_table.resizeRowsToContents()
-                            self.inst_current_result = "<title>Отчет. Подписчики</title>"
-                            self.inst_current_result += "<big><b>Источник: instagram.com</b></big>"
-                            self.inst_current_result += "<br><big><b>Поиск подписчиков</b></big>"
-                            self.inst_current_result += "<br>Выборка от<big><code> "
-                            currDt = datetime.datetime.now()
-                            string_time = currDt.strftime('%H:%M:%S %Y.%m.%d г.')
-                            self.inst_current_result += string_time
-                            self.inst_current_result += ("</i><br>Всего найдено: <i>" + str(count))
-                            self.inst_current_result += "</i><br> Заголовок: <i>id, username, закрытый, верифицирован, полное имя</i>"
-                            self.inst_current_result += "<br>"
-                            if self.ui.main_checkBox_sound.isChecked():
-                                playsound(str(app_path) + "\\sources\\sounds\\end.wav")
-                            msg = QMessageBox()
-                            msg.setIcon(QMessageBox.Information)
-                            msg.setText("Найдено: " + str(count))
-                            msg.setWindowTitle("Подписчики")
-                            msg.exec_()
-                        else:
-                            self.ui.inst_tt_textBrowser.append(
-                                "<p align=\"center\"><b><h2>Подписчики не найдены или закрыты пользователем</h2></b></p>")
-                            msg = QMessageBox()
-                            msg.setIcon(QMessageBox.Information)
-                            msg.setText("Подписчики не найдены или закрыты пользователем")
-                            msg.setWindowTitle("Уведомление")
-                            msg.exec_()
-                    else:
-                        self.inst_clear_form()
-                        self.ui.inst_tt_textBrowser.append(
-                            "<p align=\"center\"><b>Пользователь не найден</b></p>")
-                        msg = QMessageBox()
-                        msg.setIcon(QMessageBox.Information)
-                        msg.setText("Пользователь не найден")
-                        msg.setWindowTitle("Уведомление")
-                        msg.exec_()
-                except Exception as err:
-                    if self.ui.main_checkBox_sound.isChecked():
-                        playsound(str(app_path) + "\\sources\\sounds\\err.wav")
-                    msg = QMessageBox()
-                    msg.setIcon(QMessageBox.Warning)
-                    msg.setText(str(err))
-                    msg.setWindowTitle("Внутренняя ошибка")
-                    msg.exec_()
+                    playsound(str(app_path) + "\\sources\\sounds\\end.wav")
+                self.ui.textBrowser_BTSGeo.append("<p align=\"center\"><h4>Ничего не найдено!</h4></p>")
         else:
             if self.ui.main_checkBox_sound.isChecked():
                 playsound(str(app_path) + "\\sources\\sounds\\err.wav")
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Warning)
-            msg.setText("Невозможно выполнить запрос.\nПоле ввода пустое")
-            msg.setWindowTitle("Поиск")
-            msg.exec_()
-
-    def inst_clear_form(self):
-        self.ui.inst_tt_textBrowser.clear()
-        model = QStandardItemModel()
-        self.ui.inst_tt_table.setModel(model)
-        self.ui.inst_tt_textBrowser.setMaximumHeight(275)
-        self.ui.inst_tt_textBrowser.setMinimumHeight(275)
-        self.ui.inst_tt_table.setGeometry(1, 1, 741, 281)
-        self.ui.inst_tt_table.setMinimumHeight(280)
-        self.ui.inst_tt_table.setMaximumHeight(280)
-        self.ui.inst_tt_textBrowser.setGeometry(1, 288, 741, 280)
-
-    def inst_choice_changed(self):
-        curr_index = self.ui.comboBox_inst_set_choice.currentIndex()
-        if curr_index == 0:
-            self.ui.inst_checkBox_showContent.setEnabled(True)
-            self.ui.inst_checkBox_showAddresses.setEnabled(True)
-            self.ui.inst_checkBox_showComments.setEnabled(True)
-            self.ui.inst_checkBox_showLikes.setEnabled(True)
-            self.ui.inst_checkBox_showPeoplesOnPhoto.setEnabled(True)
-        else:
-            self.ui.inst_checkBox_showContent.setEnabled(False)
-            self.ui.inst_checkBox_showAddresses.setEnabled(False)
-            self.ui.inst_checkBox_showComments.setEnabled(False)
-            self.ui.inst_checkBox_showLikes.setEnabled(False)
-            self.ui.inst_checkBox_showPeoplesOnPhoto.setEnabled(False)
-
-    def on_clicked_inst_pb_downloadPhotos(self):
-        searching_user = self.ui.inst_textEdit_GetPhotos.text()
-        count = self.ui.inst_sb_count_photosBox.value()
-        if searching_user != "":
-            current_user_id = self.session_insta.getUserID(username=searching_user)
-            if current_user_id != "null":
-                try:
-                    result = self.session_insta.getUserPhoto(id=current_user_id, l=count, username=searching_user)
-                    if result == "good":
-                        msg = QMessageBox()
-                        msg.setIcon(QMessageBox.Information)
-                        msg.setText("Фото загружены в папку \"reports\"")
-                        msg.setWindowTitle("Уведомление")
-                        msg.exec_()
-                        if self.ui.main_checkBox_sound.isChecked():
-                            playsound(str(app_path) + "\\sources\\sounds\\end.wav")
-                    else:
-                        if self.ui.main_checkBox_sound.isChecked():
-                            playsound(str(app_path) + "\\sources\\sounds\\err.wav")
-                        msg = QMessageBox()
-                        msg.setIcon(QMessageBox.Warning)
-                        msg.setText("Загрузить фото не удалось")
-                        msg.setWindowTitle("Ошибка")
-                        msg.exec_()
-                except:
-                    if self.ui.main_checkBox_sound.isChecked():
-                        playsound(str(app_path) + "\\sources\\sounds\\err.wav")
-                    msg = QMessageBox()
-                    msg.setIcon(QMessageBox.Warning)
-                    msg.setText("Фото закрыты. Загрузить нельзя.")
-                    msg.setWindowTitle("Ошибка")
-                    msg.exec_()
-            else:
-                if self.ui.main_checkBox_sound.isChecked():
-                    playsound(str(app_path) + "\\sources\\sounds\\err.wav")
-                msg = QMessageBox()
-                msg.setIcon(QMessageBox.Warning)
-                msg.setText("Такого пользователя не существует")
-                msg.setWindowTitle("Ошибка")
-                msg.exec_()
-        else:
-            if self.ui.main_checkBox_sound.isChecked():
-                playsound(str(app_path) + "\\sources\\sounds\\err.wav")
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Warning)
-            msg.setText("Невозможно выполнить запрос.\nПоле ввода пустое")
-            msg.setWindowTitle("Поиск")
-            msg.exec_()
-
-    def on_clicked_inst_pbClearForm(self):
-        self.inst_clear_form()
-        self.inst_current_model = None
-        self.inst_current_result = None
-        self.ui.inst_textEditSearchByID.clear()
-        self.ui.inst_textEdit_GetPhotos.clear()
-        self.ui.inst_textEdiGetID.clear()
-        self.ui.inst_checkBox_showPeoplesOnPhoto.setChecked(False)
-        self.ui.inst_checkBox_showComments.setChecked(False)
-        self.ui.inst_checkBox_showLikes.setChecked(False)
-        self.ui.inst_checkBox_showAddresses.setChecked(False)
-        self.ui.inst_checkBox_showContent.setChecked(False)
-
-    def on_clicked_inst_saveResult(self):
-        if self.inst_current_result != None:
-            FileName = app_path + "\\reports\\INST_report_"
-            currDt = datetime.datetime.now()
-            string_time = currDt.strftime('%Y.%m.%d_%H.%M.%S')
-            FileName += string_time
-            string_to_message = "Файл сохранен. Имя:\n"
-            string_to_message += FileName
-            FileName += ".html"
-            with open(FileName, "w", encoding='utf-8') as file:
-                file.write(self.inst_current_result)
-            if self.inst_current_model != None:
-                self.inst_save_to_file_from_model(model=self.inst_current_model, filename=FileName)
-            if self.ui.main_checkBox_sound.isChecked():
-                playsound(str(app_path) + "\\sources\\sounds\\end.wav")
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.NoIcon)
-            msg.setText(string_to_message)
-            msg.setWindowTitle("Сохранение результата")
-            msg.exec_()
-        else:
-            if self.ui.main_checkBox_sound.isChecked():
-                playsound(str(app_path) + "\\sources\\sounds\\err.wav")
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Warning)
-            msg.setText("Невозможно сохранить. Нет данных")
+            msg.setText("Поле ввода пусто")
             msg.setWindowTitle("Ошибка")
             msg.exec_()
 
-    def inst_save_to_file_from_model(self, model, filename):
-        column_count = model.columnCount()
-        row_count = model.rowCount()
-        for i in range(0, row_count):
-            curr_string = "<br>"
-            curr_string += str(i + 1)
-            for j in range(0, column_count):
-                item_text = model.item(i, j).text()
-                if j == 0:
-                    curr_string += ". "
-                    curr_string += item_text
+    def on_clicked_main_pb_ShowEMAIL(self):
+        mail_from_form = self.ui.main_editEMAIL.text()
+        if mail_from_form != "":
+            curr_token_mail = None
+            self.ui.main_tbShowEMAIL.clear()
+            try:
+                with open((str(app_path) + "\\tokens\\" + token_mailrep), "r") as f:
+                    curr_token_mail = f.read()
+                if curr_token_mail != "":
+                    str_to_ret = MailReputation(curr_token_mail, mail_from_form)
+                    if str_to_ret:
+                        if self.ui.main_checkBox_sound.isChecked():
+                            playsound(str(app_path) + "\\sources\\sounds\\end.wav")
+                        self.ui.main_tbShowEMAIL.append(str_to_ret)
+                    else:
+                        if self.ui.main_checkBox_sound.isChecked():
+                            playsound(str(app_path) + "\\sources\\sounds\\err.wav")
+                        msg = QMessageBox()
+                        msg.setIcon(QMessageBox.Warning)
+                        msg.setText("Ошибка")
+                        msg.setWindowTitle("Уведомление")
+                        msg.exec_()    
                 else:
-                    curr_string += ", "
-                    curr_string += item_text
-            with open(filename, "a", encoding='utf-8') as file:
-                file.write(curr_string)
+                    if self.ui.main_checkBox_sound.isChecked():
+                        playsound(str(app_path) + "\\sources\\sounds\\err.wav")
+                    msg = QMessageBox()
+                    msg.setIcon(QMessageBox.Warning)
+                    msg.setText("Токен не записан в текстовый файл")
+                    msg.setWindowTitle("Уведомление")
+                    msg.exec_() 
+            except Exception as e:
+                if self.ui.main_checkBox_sound.isChecked():
+                    playsound(str(app_path) + "\\sources\\sounds\\err.wav")
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Warning)
+                msg.setText("Ошибка: " + str(e))
+                msg.setWindowTitle("Уведомление")
+                msg.exec_()    
+        else:
+            if self.ui.main_checkBox_sound.isChecked():
+                playsound(str(app_path) + "\\sources\\sounds\\err.wav")
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setText("Поле ввода пустое")
+            msg.setWindowTitle("Уведомление")
+            msg.exec_()
+
+    def on_clicked_main_pb_clearEMAIL(self):
+        self.ui.main_editEMAIL.clear()
+        self.ui.main_tbShowEMAIL.clear()
+
+    def on_clicked_main_pb_ShowWifi(self):
+        bssid = self.ui.main_edit_Wifi.text()
+        if bssid != "":
+            self.ui.main_tbShowWifi.clear()
+            try:
+                info = get_coord_wifi_inikov(bssid)
+                if self.ui.main_checkBox_sound.isChecked():
+                    playsound(str(app_path) + "\\sources\\sounds\\end.wav")
+                if info[0]:
+                    self.ui.main_tbShowWifi.append("<p align=\"center\"><h3>mylnikov.org</h3></p>")
+                    self.ui.main_tbShowWifi.append(str(info[0]) + "," + str(info[1]) + "; точность: " + str(info[2]) + " м")
+                else:
+                    if self.ui.main_checkBox_sound.isChecked():
+                        playsound(str(app_path) + "\\sources\\sounds\\end.wav")
+                    self.ui.main_tbShowWifi.append("<p align=\"center\"><h4>Ничего не найдено!</h4></p>")
+            except:
+                if self.ui.main_checkBox_sound.isChecked():
+                    playsound(str(app_path) + "\\sources\\sounds\\end.wav")
+                self.ui.main_tbShowWifi.append("<p align=\"center\"><h4>Ничего не найдено!</h4></p>")
+        else:
+            if self.ui.main_checkBox_sound.isChecked():
+                playsound(str(app_path) + "\\sources\\sounds\\err.wav")
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setText("Поле ввода пусто")
+            msg.setWindowTitle("Ошибка")
+            msg.exec_()
+
+    def on_clicked_main_pb_clearWifi(self):
+        self.ui.main_edit_Wifi.clear()
+        self.ui.main_tbShowWifi.clear()
+
+    def on_clicked_main_pb_clearIMEI(self):
+        self.ui.main_editIMEI.clear()
+        self.ui.main_tbShowIMEI.clear()
+
+    def on_clicked_main_pb_ShowIMEI(self):
+        imei = self.ui.main_editIMEI.text()
+        if imei != "":
+            self.ui.main_tbShowIMEI.clear()
+            info = get_imei_from_csv(app_path, imei)
+            if self.ui.main_checkBox_sound.isChecked():
+                playsound(str(app_path) + "\\sources\\sounds\\end.wav")
+            try:
+                self.ui.main_tbShowIMEI.append(f"<p align=\"center\">{info}</p>")
+            except Exception as e:
+                if self.ui.main_checkBox_sound.isChecked():
+                    playsound(str(app_path) + "\\sources\\sounds\\err.wav")
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Warning)
+                msg.setText(str(e))
+                msg.setWindowTitle("Ошибка")
+                msg.exec_()
+        else:
+            if self.ui.main_checkBox_sound.isChecked():
+                playsound(str(app_path) + "\\sources\\sounds\\err.wav")
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setText("Поле ввода пусто")
+            msg.setWindowTitle("Ошибка")
+            msg.exec_()
 
     #          Geocoding
 
@@ -2524,17 +2247,28 @@ class MyWin(QtWidgets.QMainWindow):
                 msg.setText(str(err))
                 msg.setWindowTitle("Ошибка - токен")
                 msg.exec_()
-            try:
-                str_to_tb, limit = GetCoordinates(token=curr_token, text=geo_object)
-                self.ui.main_tbShowGeoObjectLatLon.append(str_to_tb)
-                self.ui.main_tbShowGeoObjectLatLon.moveCursor(QTextCursor.Start)
-            except Exception as e:
+            if curr_token != "":                
+                try:
+                    str_to_tb, limit = GetCoordinates(token=curr_token, text=geo_object)
+                    self.ui.main_tbShowGeoObjectLatLon.append(str_to_tb)
+                    self.ui.main_tbShowGeoObjectLatLon.moveCursor(QTextCursor.Start)
+                    if self.ui.main_checkBox_sound.isChecked():
+                        playsound(str(app_path) + "\\sources\\sounds\\end.wav")
+                except Exception as e:
+                    if self.ui.main_checkBox_sound.isChecked():
+                        playsound(str(app_path) + "\\sources\\sounds\\err.wav")
+                    msg = QMessageBox()
+                    msg.setIcon(QMessageBox.Warning)
+                    msg.setText(str(e))
+                    msg.setWindowTitle("Ошибка")
+                    msg.exec_()
+            else:
                 if self.ui.main_checkBox_sound.isChecked():
                     playsound(str(app_path) + "\\sources\\sounds\\err.wav")
                 msg = QMessageBox()
                 msg.setIcon(QMessageBox.Warning)
-                msg.setText(str(e))
-                msg.setWindowTitle("Ошибка")
+                msg.setText("Не удалось получить токен")
+                msg.setWindowTitle("Уведомление")
                 msg.exec_()
 
     def on_clicked_pb_clearGeoObject(self):
@@ -2558,17 +2292,28 @@ class MyWin(QtWidgets.QMainWindow):
                 msg.setText(str(err))
                 msg.setWindowTitle("Ошибка - токен")
                 msg.exec_()
-            try:
-                str_to_tb = GetInfoByCoordinates(token=curr_token, latit=geo_lat, longit=geo_lon)
-                self.ui.main_tbShowGeoObjectInfo.append(str_to_tb)
-                self.ui.main_tbShowGeoObjectInfo.moveCursor(QTextCursor.Start)
-            except Exception as e:
+            if curr_token != "":
+                try:
+                    str_to_tb, _ = GetInfoByCoordinates(token=curr_token, latit=geo_lat, longit=geo_lon)
+                    self.ui.main_tbShowGeoObjectInfo.append(str_to_tb)
+                    self.ui.main_tbShowGeoObjectInfo.moveCursor(QTextCursor.Start)
+                    if self.ui.main_checkBox_sound.isChecked():
+                        playsound(str(app_path) + "\\sources\\sounds\\end.wav")
+                except Exception as e:
+                    if self.ui.main_checkBox_sound.isChecked():
+                        playsound(str(app_path) + "\\sources\\sounds\\err.wav")
+                    msg = QMessageBox()
+                    msg.setIcon(QMessageBox.Warning)
+                    msg.setText(str(e))
+                    msg.setWindowTitle("Ошибка")
+                    msg.exec_()
+            else:
                 if self.ui.main_checkBox_sound.isChecked():
                     playsound(str(app_path) + "\\sources\\sounds\\err.wav")
                 msg = QMessageBox()
                 msg.setIcon(QMessageBox.Warning)
-                msg.setText(str(e))
-                msg.setWindowTitle("Ошибка")
+                msg.setText("Не удалось получить токен")
+                msg.setWindowTitle("Уведомление")
                 msg.exec_()
 
     def on_clicked_pb_clearGeoInfo(self):
@@ -2582,22 +2327,21 @@ class MyWin(QtWidgets.QMainWindow):
         curr_lat = self.ui.main_editLAT_FindBS.text()
         curr_lon = self.ui.main_editLON_FindBS.text()
         curr_radius = self.ui.main_editRadius.text()
-        map = folium.Map(location=[float(curr_lat), float(curr_lon)], zoom_start=15)
         api_result = None
         if curr_lat != "" and curr_lon != "" and curr_radius != "":
+            self.ui.tbrwsr_ShowBStations.clear()
+            map = folium.Map(location=[float(curr_lat), float(curr_lon)], zoom_start=15)
             position = curr_lat + "," + curr_lon
             loc = Coord.from_str(position)
             curr_token = None
             try:
                 with open((str(app_path) + "\\tokens\\" + token_ocd), "r") as f:
                     curr_token = f.read()
-
                 area = float(curr_radius)
                 p_max, p_min = loc.square_from_point(area)
                 url = PREFIX + curr_token + "&BBOX=" + p_min.to_str() + ',' + p_max.to_str() + PARAM
                 api_result = requests.get(url)
                 api_result = json.loads(api_result.text)
-
                 if api_result.get("error") == "Daily limit 5000 requests exceeded for your API key":
                     if self.ui.main_checkBox_sound.isChecked():
                         playsound(str(app_path) + "\\sources\\sounds\\err.wav")
@@ -2609,7 +2353,7 @@ class MyWin(QtWidgets.QMainWindow):
                     try:
                         with open((str(app_path) + "\\tokens\\" + reserve_token_ocd), "r") as f:
                             curr_token = f.read()
-                    except Exception as err:
+                    except:
                         if self.ui.main_checkBox_sound.isChecked():
                             playsound(str(app_path) + "\\sources\\sounds\\err.wav")
                     new_url = PREFIX + curr_token + "&BBOX=" + p_min.to_str() + ',' + p_max.to_str() + PARAM
@@ -2622,84 +2366,100 @@ class MyWin(QtWidgets.QMainWindow):
                     folium.Marker(location=[float(curr_lat), float(curr_lon)], popup=("Исходное местоположение"),
                                 icon=folium.Icon(color="green", icon="info-sign")).add_to(map)
 
-                print(str(api_result['count']) + ' Stations Found')
-                print("{:^10}|{:^10}, {:^10}|{:^7}|{:^5}|{:^3}| radio".format(
-                    "cellid", "lat", "lon", "lac", "mcc", "mnc"))
-                print("{:->11}{:->23}{:->8}{:->6}{:->4}------".format("+", "+", "+", "+", "+"))
+                if self.ui.cb_ModeBTSShowing.currentIndex() == 0:
+                    list_bts = api_result.get("cells")
+                    base_dict = {}
+                    if list_bts:
+                        if len(list_bts) > 0:
+                            try:
+                                for base in list_bts:
+                                    mnc = str(base["mnc"])
+                                    if len(mnc) == 1:
+                                        mnc = "0" + mnc
+                                    base_dict = append_to_dict(base_dict, (str(base["mcc"]), mnc, str(base["radio"]), str(base["lac"]), str(base["cellid"])))
+                                string_to_return = return_cool_str(app_path, base_dict)
+                                self.ui.tbrwsr_ShowBStations.clear()
+                                self.ui.tbrwsr_ShowBStations.append(string_to_return)
+                                if self.ui.main_checkBox_sound.isChecked():
+                                    playsound(str(app_path) + "\\sources\\sounds\\end.wav")
+                            except:
+                                self.ui.tbrwsr_ShowBStations.append("<b>Ничего не найдено!</b>")
+                        else:
+                            if api_result.get("error") == "No cells found":
+                                self.ui.tbrwsr_ShowBStations.append("<b>Ничего не найдено!</b>")
+                            else:
+                                self.ui.tbrwsr_ShowBStations.append("<b>Ничего не найдено!</b>")
+                    else:
+                        if api_result.get("error") == "No cells found":
+                            self.ui.tbrwsr_ShowBStations.append("<b>Ничего не найдено!</b>")
+                        else:
+                            pass
+                elif self.ui.cb_ModeBTSShowing.currentIndex() == 1:
 
-                for cell in api_result['cells']:
-                    print("{cid:9d} | {lat:8f}, {lon:8f} | {lac:5d} | {mcc:3d} | {mnc:d} | {radio}".format(
-                        cid=cell['cellid'],
-                        lat=cell['lat'],
-                        lon=cell['lon'],
-                        lac=cell['lac'],
-                        mcc=cell['mcc'],
-                        mnc=cell['mnc'],
-                        radio=cell['radio']))
-                # html
-
-                string_to_html = "<title>Отчет. Базовые станции</title>"
-                string_to_html += "<big><b>Источник: unwiredlabs.com, сервис: OpenCellId</b></big>"
-                string_to_html += "<br>Информация о ближайших базовых станций ССПР"
-                string_to_html += "<br>Всего найдено: <i>" + str(api_result['count']) + "</i>"
-                string_to_html += "<br>Местоположение: <i>" + position + "</i>"
-                string_to_html += "<br>Радиус: <i>" + curr_radius + "</i>"
-                string_to_html += "<br>Заголовок: №. стандарт, широта, долгота, mcc, nmc, lac, cid"
-                string_to_html += "<br>"
-                cnt = 0
-                for cell in api_result['cells']:
-                    cnt = cnt + 1
-                    cid = cell['cellid']
-                    lat = cell['lat']
-                    lon = cell['lon']
-                    lac = cell['lac']
-                    mcc = cell['mcc']
-                    mnc = cell['mnc']
-                    radio = cell['radio']
+                    string_to_html = "<title>Отчет. Базовые станции</title>"
+                    string_to_html += "<big><b>Источник: unwiredlabs.com, сервис: OpenCellId</b></big>"
+                    string_to_html += "<br>Информация о ближайших базовых станций ССПР"
+                    string_to_html += "<br>Всего найдено: <i>" + str(api_result['count']) + "</i>"
+                    string_to_html += "<br>Местоположение: <i>" + position + "</i>"
+                    string_to_html += "<br>Радиус: <i>" + curr_radius + "</i>"
+                    string_to_html += "<br>Заголовок: №. стандарт, широта, долгота, mcc, nmc, lac, cid"
                     string_to_html += "<br>"
-                    string_to_html += (str(cnt) + ". " + radio + ", " + str(lat) + ", " + str(lon)
-                                    + ", " + str(mcc) + ", " + str(mnc) + ", " + str(lac) + ", " + str(cid))
+                    cnt = 0
+                    for cell in api_result['cells']:
+                        cnt = cnt + 1
+                        cid = cell['cellid']
+                        lat = cell['lat']
+                        lon = cell['lon']
+                        lac = cell['lac']
+                        mcc = cell['mcc']
+                        mnc = cell['mnc']
+                        radio = cell['radio']
+                        string_to_html += "<br>"
+                        string_to_html += (str(cnt) + ". " + radio + ", " + str(lat) + ", " + str(lon)
+                                        + ", " + str(mcc) + ", " + str(mnc) + ", " + str(lac) + ", " + str(cid))
+                        try:
+                            if self.ui.main_check_mapShow.isChecked():
+                                folium.Marker(location=[float(lat), float(lon)], popup=(str(lat) + ";" + str(lon)),
+                                            icon=folium.Icon(color="blue", icon="signal")).add_to(map)
+                        except Exception as err_m:
+                            print(err_m)
                     try:
+                        FileName = app_path + "\\reports\\BSInfo_report_"
+                        currDt = datetime.datetime.now()
+                        string_time = currDt.strftime('%Y.%m.%d_%H.%M.%S')
+                        FileNameMap = app_path + "\\reports\\Map_"
+                        FileNameMap += string_time
+                        FileName += string_time
+                        string_to_message = "Отчет со списком сохранен. Имя:\n"
+                        string_to_message += FileName
                         if self.ui.main_check_mapShow.isChecked():
-                            folium.Marker(location=[float(lat), float(lon)], popup=(str(lat) + ";" + str(lon)),
-                                        icon=folium.Icon(color="blue", icon="signal")).add_to(map)
-                    except Exception as err_m:
-                        print(err_m)
-                try:
-                    FileName = app_path + "\\reports\\BSInfo_report_"
-                    currDt = datetime.datetime.now()
-                    string_time = currDt.strftime('%Y.%m.%d_%H.%M.%S')
-                    FileNameMap = app_path + "\\reports\\Map_"
-                    FileNameMap += string_time
-                    FileName += string_time
-                    string_to_message = "Отчет со списком сохранен. Имя:\n"
-                    string_to_message += FileName
-                    if self.ui.main_check_mapShow.isChecked():
-                        string_to_message += "\nКарта создана. Имя:\n"
-                        string_to_message += FileNameMap
-                    string_to_message += "\nВсего найдено: " + str(api_result['count'])
-                    FileNameMap += ".html"
-                    FileName += ".html"
-                    with open(FileName, "w", encoding='utf-8') as file:
-                        file.write(string_to_html)
-                    if self.ui.main_checkBox_sound.isChecked():
-                        playsound(str(app_path) + "\\sources\\sounds\\end.wav")
-                    if self.ui.main_check_mapShow.isChecked():
-                        map.save(FileNameMap)
-                    msg = QMessageBox()
-                    msg.setIcon(QMessageBox.NoIcon)
-                    msg.setText(string_to_message)
-                    msg.setWindowTitle("Сохранение результата")
-                    msg.exec_()
-                except Exception as e:
-                    if self.ui.main_checkBox_sound.isChecked():
-                        playsound(str(app_path) + "\\sources\\sounds\\err.wav")
-                    msg = QMessageBox()
-                    msg.setIcon(QMessageBox.Warning)
-                    msg.setText(str(e))
-                    msg.setWindowTitle("Ошибка")
-                msg.exec_()
-            except Exception as err:
+                            string_to_message += "\nКарта создана. Имя:\n"
+                            string_to_message += FileNameMap
+                        string_to_message += "\nВсего найдено: " + str(api_result['count'])
+                        FileNameMap += ".html"
+                        FileName += ".html"
+                        with open(FileName, "w", encoding='utf-8') as file:
+                            file.write(string_to_html)
+                        if self.ui.main_checkBox_sound.isChecked():
+                            playsound(str(app_path) + "\\sources\\sounds\\end.wav")
+                        if self.ui.main_check_mapShow.isChecked():
+                            map.save(FileNameMap)
+                        msg = QMessageBox()
+                        msg.setIcon(QMessageBox.NoIcon)
+                        msg.setText(string_to_message)
+                        msg.setWindowTitle("Сохранение результата")
+                        if self.ui.main_checkBox_sound.isChecked():
+                            playsound(str(app_path) + "\\sources\\sounds\\end.wav")
+                        msg.exec_()
+                    except Exception as e:
+                        if self.ui.main_checkBox_sound.isChecked():
+                            playsound(str(app_path) + "\\sources\\sounds\\err.wav")
+                        msg = QMessageBox()
+                        msg.setIcon(QMessageBox.Warning)
+                        msg.setText(str(e))
+                        msg.setWindowTitle("Ошибка")
+                        msg.exec_()
+            except:
                 if self.ui.main_checkBox_sound.isChecked():
                     playsound(str(app_path) + "\\sources\\sounds\\err.wav")
                 msg = QMessageBox()
@@ -2712,7 +2472,7 @@ class MyWin(QtWidgets.QMainWindow):
                 playsound(str(app_path) + "\\sources\\sounds\\err.wav")
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Warning)
-            msg.setText("Невозможно сохранить. Нет данных")
+            msg.setText("Недостаточно данных!\nПроверьте все поля")
             msg.setWindowTitle("Ошибка")
             msg.exec_()
 
@@ -2720,7 +2480,62 @@ class MyWin(QtWidgets.QMainWindow):
         self.ui.main_editLAT_FindBS.clear()
         self.ui.main_editLON_FindBS.clear()
         self.ui.main_editRadius.clear()
+        self.ui.tbrwsr_ShowBStations.clear()
         self.ui.main_check_mapShow.setChecked(False)
+
+    def on_clicked_main_pb_clearShowBTSGeo(self):
+        self.ui.le_BTSGeo_mcc.clear()
+        self.ui.le_BTSGeo_mnc.clear()
+        self.ui.le_BTSGeo_lac.clear()
+        self.ui.le_BTSGeo_cid.clear()
+        self.ui.textBrowser_BTSGeo.clear()
+
+    def on_clicked_main_pb_ShowBTSGeo(self):
+        self.ui.textBrowser_BTSGeo.clear()
+        mcc = self.ui.le_BTSGeo_mcc.text()
+        mnc = self.ui.le_BTSGeo_mnc.text()
+        lac = self.ui.le_BTSGeo_lac.text()
+        cid = self.ui.le_BTSGeo_cid.text()
+        flag_find = False
+        if mnc != "" and mcc != "" and lac != "" and cid != "":
+            curr_token = None
+            try:
+                with open((str(app_path) + "\\tokens\\" + token_ocd), "r") as f:
+                    curr_token = f.read()
+                res = get_coordinates(mcc, mnc, lac, cid, curr_token)
+                if res[0]:
+                    self.ui.textBrowser_BTSGeo.append("<p align=\"center\"><h4>OpenCellId.org</h4></p>")
+                    self.ui.textBrowser_BTSGeo.append(str(res[0]) + "," + str(res[1]))
+                    self.ui.textBrowser_BTSGeo.append(str(res[2]))
+                    flag_find = True
+                    if self.ui.main_checkBox_sound.isChecked():
+                        playsound(str(app_path) + "\\sources\\sounds\\end.wav")
+                else:
+                    pass
+            except Exception as e:
+                print(e)
+            try:
+                res = get_coordinates_inikov(mcc, mnc, lac, cid)
+                if res[0]:
+                    self.ui.textBrowser_BTSGeo.append("<p align=\"center\"><h4>mylnikov.org</h4></p>")
+                    self.ui.textBrowser_BTSGeo.append(str(res[0]) + "," + str(res[1]))
+                    flag_find = True
+                    if self.ui.main_checkBox_sound.isChecked():
+                        playsound(str(app_path) + "\\sources\\sounds\\end.wav")
+                else:
+                    pass
+            except:
+                pass
+            if not flag_find:
+                self.ui.textBrowser_BTSGeo.append("<p align=\"center\"><h4>Ничего не найдено!</h4></p>")
+        else:
+            if self.ui.main_checkBox_sound.isChecked():
+                playsound(str(app_path) + "\\sources\\sounds\\err.wav")
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setText("Поля ввода пустые")
+            msg.setWindowTitle("Ошибка")
+            msg.exec_()
 
 
 if __name__ == "__main__":

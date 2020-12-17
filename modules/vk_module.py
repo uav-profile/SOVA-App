@@ -10,7 +10,7 @@ import os
 from pprint import pprint
 import sys
 
-# содержимое файла "tokens/vk_log_pass.txt": {логин пароль} -> разделены пробелом
+# содержимое файла "tokens/vk_log_pass.txt": {логин пароль client_id} -> разделены пробелом
 global_path_to_tok = None
 global_path_to_l_p = None
 global_path_scr = None
@@ -393,7 +393,7 @@ def VK_isMemberInGroup(handler, group_identity = "", user_identity = ""):
                                     string_to_return += "НЕ может быть приглашен в группу"
     return result_to_return, string_to_return
 
-def VK_GetFullInfo(handler, user_id, show_friends = True, show_subs = True, show_followers = True, show_all_groups = True, show_wall = True, wall_records = 10):
+def VK_GetFullInfo(handler, user_id = "440278043", show_friends = True, show_subs = True, show_followers = True, show_all_groups = True, show_wall = True, wall_records = 10):
     global global_path_to_tok
     global global_path_to_l_p
     string_to_return = ""

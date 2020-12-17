@@ -21,9 +21,9 @@
 
 ### Запуск можно осуществить 3 способами (выбрать <i>один</i> из трех вариантов):
 
-### 1. <a href="https://github.com/uav-profile/SOVA-App/releases/download/v0.0.2/SOVA.Setup.exe">Скачать и установить setup-версию (win10-x64) (~88.7 Мб)</a> ![](https://github.com/uav-profile/SOVA-App/blob/main/sources/to_git/Down.png), <i>записать логины/пароли/токены</i> в текстовые файлы в каталоге <b>tokens</b> (см. подробнее во вкладке "Помощь"). Запустить <i>SOVA.exe</i>.
+### 1. <a href="https://github.com/uav-profile/SOVA-App/releases/download/v2.0.0/SOVA.v.2.Setup.exe">Скачать и установить setup-версию (win10-x64) (~88.7 Мб)</a> ![](https://github.com/uav-profile/SOVA-App/blob/main/sources/to_git/Down.png), <i>записать логины/пароли/токены</i> в текстовые файлы в каталоге <b>tokens</b> (см. подробнее во вкладке "Помощь"). Запустить <i>SOVA.exe</i>.
 
-### 2. <a href="https://github.com/uav-profile/SOVA-App/releases/download/v0.0.2-zip/SOVA-archieve-win-amd64-3.7.exe">Скачать и распаковать portable-версию (архив) (win10-x64) (~116 Мб)</a> ![](https://github.com/uav-profile/SOVA-App/blob/main/sources/to_git/Down.png), <i>записать логины/пароли/токены</i> в текстовые файлы в каталоге <b>tokens</b> (см. подробнее во вкладке "Помощь"). Запустить <i>SOVA.exe</i>.
+### 2. <a href="https://github.com/uav-profile/SOVA-App/releases/download/v2.0.0-zip/SOVA-v2-archieve-win-amd64-3.7.exe">Скачать и распаковать portable-версию (архив) (win10-x64) (~116 Мб)</a> ![](https://github.com/uav-profile/SOVA-App/blob/main/sources/to_git/Down.png), <i>записать логины/пароли/токены</i> в текстовые файлы в каталоге <b>tokens</b> (см. подробнее во вкладке "Помощь"). Запустить <i>SOVA.exe</i>.
 
 ### 3. Скачать исходные файлы для <a href="https://github.com/uav-profile/SOVA-App/archive/main.zip">Windows</a> или <a href="https://github.com/uav-profile/SOVA-App/blob/main/sources/SOVA-App-linux.tar.gz">Linux</a> ![](https://github.com/uav-profile/SOVA-App/blob/main/sources/to_git/Hourglass.png) . Перед запуском необходимо установить <a href="https://www.python.org/downloads/">python</a> и <a href="https://pypi.org/search/">зависимости</a> (необходимые библиотеки), <i>записать логины/пароли/токены</i> в текстовые файлы в каталоге <b>tokens</b> (см. подробнее во вкладке "Помощь").
 
@@ -47,7 +47,7 @@
 
 ![](https://github.com/uav-profile/SOVA-App/blob/main/sources/to_git/3.PNG)
 
-
+![](https://github.com/uav-profile/SOVA-App/blob/main/sources/to_git/4.PNG)
 
 # Отказ от ответственности:
    Данное Программное Обеспечение (далее - ПО) создано в образовательных целях и не предполагает использование в коммерческих. Устанавливая данное ПО вы соглашаетесь не предпринимать действий, которые могут рассматриваться, как нарушающие российское законодательство или нормы международного права, в том числе в сфере интеллектуальной собственности, авторских и/или смежных правах, а также любых действий, которые приводят или могут привести к нарушению нормальной работы программы. Автор ПО не несет ответственности за результаты и последствия использования данного программного продукта. Любые действия, связанные с возможностями, содержащимися в ПО, являются исключительно вашей ответственностью. Неправомерное использование информации, полученной с помощью данного ПО может привести к уголовному обвинению лиц, о которых идет речь. Автор ПО не будет привлечен к ответственности в случае предъявления любых уголовных обвинений любым лицам, злоупотребляющим полученной информацией.

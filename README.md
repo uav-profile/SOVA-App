@@ -19,10 +19,6 @@
 <br>
 <br> Возникают ситуации, когда результаты имеют ссылки на графические объекты или найденный пользователь представляет интерес и нужно найти больше информации вручную - в правой части программы имеются модули для просмотра картинок. Также имеется поле для записей - "Черновик". Реализована возможность изменения цветового оформления и включение звуковых уведомлений.
 
-
-![](https://github.com/uav-profile/SOVA-App/blob/main/sources/to_git/1.PNG)
-
-
 ### Запуск можно осуществить 3 способами (выбрать <i>один</i> из трех вариантов):
 
 ### 1. <a href="https://github.com/uav-profile/SOVA-App/releases/download/v0.0.2/SOVA.Setup.exe">Скачать и установить setup-версию (win10-x64) (~88.7 Мб)</a> ![](https://github.com/uav-profile/SOVA-App/blob/main/sources/to_git/Down.png), <i>записать логины/пароли/токены</i> в текстовые файлы в каталоге <b>tokens</b> (см. подробнее во вкладке "Помощь"). Запустить <i>SOVA.exe</i>.
@@ -37,8 +33,14 @@
 ### Выполнить (командная строка):
     python \\<путь_к_скрипту>\\SOVA.py 
     python3 \\<путь_к_скрипту>\\SOVA.py
- 
-    
+
+# Интерфейс программы
+
+![](https://github.com/uav-profile/SOVA-App/blob/main/sources/to_git/1.PNG)
+
+![](https://github.com/uav-profile/SOVA-App/blob/main/sources/to_git/2.PNG)
+
+![](https://github.com/uav-profile/SOVA-App/blob/main/sources/to_git/3.PNG)
 
 # ![](https://github.com/uav-profile/SOVA-App/blob/main/sources/to_git/Ok.png) <a href="https://t.me/SovaAppBot"> TELEGRAM BOT</a>: <code>@SovaAppBot</code>    
     

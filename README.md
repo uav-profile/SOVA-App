@@ -39,6 +39,8 @@
 ![](https://github.com/uav-profile/SOVA-App/blob/main/sources/to_git/tg.png)      
 
 
+# ![](https://github.com/uav-profile/SOVA-App/blob/main/sources/to_git/Ok.png) <a href="http://www.sova-app.eu"> WEB-версия: <code>www.sova-app.eu</code> </a>  
+
 # Интерфейс программы
 
 ![](https://github.com/uav-profile/SOVA-App/blob/main/sources/to_git/1.PNG)

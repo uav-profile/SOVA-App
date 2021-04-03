@@ -1,4 +1,12 @@
 # SOVA App
+![license](https://img.shields.io/github/license/uav-profile/SOVA-App.svg)
+![loads](https://img.shields.io/github/downloads/uav-profile/SOVA-App/total.svg)
+![release](https://badgen.net/github/release/uav-profile/SOVA-App)
+
+![](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)
+![](https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)
+
+
 ![](https://github.com/uav-profile/SOVA-App/blob/main/sources/images/about.jpg)
 
 Данное ПО создано в образовательных целях - изучение возможностей получения информации из сети <a href="https://ru.wikipedia.org/wiki/%D0%98%D0%BD%D1%82%D0%B5%D1%80%D0%BD%D0%B5%D1%82">"Интернет"</a>.

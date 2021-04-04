@@ -3,8 +3,8 @@
 [![license](https://img.shields.io/github/license/uav-profile/SOVA-App.svg)](https://github.com/uav-profile/SOVA-App/releases/download/v2.0.1/SOVA.v.2.Setup.exe)
 [![release](https://badgen.net/github/release/uav-profile/SOVA-App)](https://github.com/uav-profile/SOVA-App/releases/download/v2.0.1/SOVA.v.2.Setup.exe)
 
-[![](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)]()
-[![](https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)]()
+[![](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/uav-profile/SOVA-App/archive/main.zip)
+[![](https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)](https://github.com/uav-profile/SOVA-App/blob/main/sources/sova_app_on_linux.tar.gz)
 
 
 ![](https://github.com/uav-profile/SOVA-App/blob/main/sources/images/about.jpg)

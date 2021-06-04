@@ -67,7 +67,11 @@ def oauth(login = None, password = None, client_id= None, scope=2097151):
         response = session.get(url)
 
     try:
-        return re.search(r'access_token=([^\&]+)', response.url).group(1)
+        uri_callback = response.url
+        uri_callback = uri_callback.replace("%2523", "#")
+        uri_callback = uri_callback.replace("%253D", "=")
+        uri_callback = uri_callback.replace("%2526", "&")
+        return re.search(r'access_token=([^\&]+)', uri_callback).group(1)
     except:
         return None
 
